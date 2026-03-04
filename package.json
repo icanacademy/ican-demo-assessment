@@ -1,0 +1,14 @@
+{
+  "name": "ican-demo-assessment",
+  "version": "1.0.0",
+  "description": "ICAN Demo Assessment Form Web App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.5.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2"
+  }
+}

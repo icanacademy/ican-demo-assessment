@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICAN Demo Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ican: {
+                            primary: '#1e2ebd',
+                            dark: '#161f8a',
+                            light: '#eef0ff'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .rating-btn { transition: all 0.2s; }
+        .rating-btn.met { @apply bg-green-500 text-white; }
+        .rating-btn.ni { @apply bg-yellow-500 text-white; }
+        .rating-btn.fail { @apply bg-red-500 text-white; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-break { page-break-before: always; }
+
+            /* Print layout - balanced spacing */
+            body {
+                font-size: 11px !important;
+                margin: 0 !important;
+                padding: 10px !important;
+                background: white !important;
+            }
+            .bg-gray-50 { background: white !important; }
+            header {
+                padding: 10px 15px !important;
+                margin-bottom: 10px !important;
+            }
+            header img { height: 50px !important; }
+            header h1 { font-size: 18px !important; }
+            header p { font-size: 11px !important; }
+            main { padding: 0 10px !important; }
+            .max-w-6xl { max-width: 100% !important; }
+
+            /* Section styling */
+            .bg-white, .rounded-xl, .shadow-md {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                margin-bottom: 10px !important;
+                padding: 12px !important;
+                border-radius: 6px !important;
+            }
+            h2 { font-size: 13px !important; margin-bottom: 8px !important; }
+
+            /* Applicant info - 3 columns */
+            .grid { gap: 8px !important; }
+            #applicant-info-grid {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 6px 12px !important;
+            }
+            #applicant-info-grid > div {
+                margin-bottom: 0 !important;
+            }
+            label { font-size: 9px !important; margin-bottom: 2px !important; display: block !important; color: #555 !important; }
+            input, select, textarea {
+                padding: 4px 6px !important;
+                font-size: 10px !important;
+                border: 1px solid #bbb !important;
+                height: auto !important;
+            }
+
+            /* Criteria - 2 columns */
+            #criteria-container { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
+            #criteria-container > div {
+                padding: 8px 10px !important;
+                background: #f5f5f5 !important;
+                border-radius: 4px !important;
+                font-size: 10px !important;
+            }
+            #criteria-container > div > div { gap: 6px !important; }
+            .rating-btn {
+                padding: 3px 10px !important;
+                font-size: 8px !important;
+                width: auto !important;
+                min-width: 36px !important;
+            }
+            [data-comment], input[data-comment] { display: none !important; }
+
+            /* Score summary */
+            .grid-cols-3 > div { padding: 8px !important; }
+            .text-3xl { font-size: 20px !important; }
+
+            /* Final assessment */
+            .final-btn {
+                padding: 8px 12px !important;
+                font-size: 11px !important;
+                min-width: auto !important;
+            }
+            .final-btn span { font-size: 16px !important; }
+
+            /* Feedback section */
+            #feedback-output {
+                padding: 8px !important;
+            }
+            #feedback-content {
+                font-size: 10px !important;
+                line-height: 1.4 !important;
+            }
+
+            /* General spacing adjustments */
+            .gap-4, .gap-3, .gap-2 { gap: 6px !important; }
+            .py-4, .py-6 { padding-top: 8px !important; padding-bottom: 8px !important; }
+            .px-4, .px-6 { padding-left: 10px !important; padding-right: 10px !important; }
+            .mt-6, .mt-4 { margin-top: 8px !important; }
+            .mb-6, .mb-4 { margin-bottom: 8px !important; }
+            textarea { height: 50px !important; min-height: 50px !important; }
+
+            /* Progress bar hide */
+            #progress-bar, .h-2 { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-ican-primary text-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <img src="logo.png" alt="ICAN Logo" class="h-16">
+                <div>
+                    <h1 class="text-2xl font-bold">Demo Assessment Form</h1>
+                    <p class="text-blue-200 text-sm">Teaching Demonstration Evaluation</p>
+                </div>
+            </div>
+            <nav class="no-print flex gap-2">
+                <button onclick="showTab('topic-generator')" id="tab-topic-generator" class="tab-btn px-4 py-2 rounded-lg hover:bg-white/30">
+                    Topic Generator
+                </button>
+                <button onclick="showTab('form')" id="tab-form" class="tab-btn px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30">
+                    New Assessment
+                </button>
+                <button onclick="showTab('history')" id="tab-history" class="tab-btn px-4 py-2 rounded-lg hover:bg-white/30">
+                    History
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6">
+        <!-- Topic Generator Tab -->
+        <div id="topic-generator-tab" class="hidden">
+            <!-- Input Section -->
+            <div id="topic-input-section" class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-ican-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    Generate Demo Topic
+                </h2>
+                <p class="text-sm text-gray-500 mb-6">Generate topic options for applicant demo lessons</p>
+
+                <form id="topicGeneratorForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Applicant's Name *</label>
+                        <input type="text" id="tg-teacher-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" placeholder="Enter applicant's name" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Teaching Experience</label>
+                        <select id="tg-experience" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" required>
+                            <option value="">Select experience level</option>
+                            <option value="new">New Teacher (0-1 years)</option>
+                            <option value="beginner">Beginner (1-3 years)</option>
+                            <option value="intermediate">Intermediate (3-5 years)</option>
+                            <option value="experienced">Experienced (5-10 years)</option>
+                            <option value="expert">Expert (10+ years)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Student Level *</label>
+                        <select id="tg-student-level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" required>
+                            <option value="">Select student level</option>
+                            <option value="preschool">Preschool (Ages 3-5)</option>
+                            <option value="elementary-lower">Elementary - Lower (Grades 1-2)</option>
+                            <option value="elementary-upper">Elementary - Upper (Grades 3-5)</option>
+                            <option value="middle">Middle School (Grades 6-8)</option>
+                            <option value="high">High School (Grades 9-12)</option>
+                            <option value="adult-beginner">Adult - Beginner</option>
+                            <option value="adult-intermediate">Adult - Intermediate</option>
+                            <option value="adult-advanced">Adult - Advanced</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject Area *</label>
+                        <select id="tg-subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" required>
+                            <option value="">Select subject</option>
+                            <option value="english">English / ESL</option>
+                            <option value="science">Science</option>
+                            <option value="math">Mathematics</option>
+                            <option value="coding">Coding / Computer Science</option>
+                            <option value="social-studies">Social Studies / History</option>
+                            <option value="art">Art & Creativity</option>
+                            <option value="music">Music</option>
+                            <option value="health">Health & Wellness</option>
+                            <option value="random">Surprise Me!</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="w-full bg-ican-primary text-white px-6 py-3 rounded-lg hover:bg-ican-dark transition-colors flex items-center justify-center gap-2 font-semibold">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            Generate 3 Topics
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Topic Selection Section (hidden by default) -->
+            <div id="topic-selection-section" class="hidden bg-white rounded-xl shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-ican-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        Select a Topic
+                    </h2>
+                    <span id="tg-subject-badge" class="px-3 py-1 rounded-full text-sm font-medium bg-ican-light text-ican-primary"></span>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-gray-600"><strong>Applicant:</strong> <span id="tg-display-name"></span></p>
+                    <p class="text-sm text-gray-600"><strong>Experience:</strong> <span id="tg-display-experience"></span></p>
+                    <p class="text-sm text-gray-600"><strong>Student Level:</strong> <span id="tg-display-level"></span></p>
+                </div>
+
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Click to select your demo topic:</h3>
+                <div class="space-y-3" id="topic-options-container">
+                    <!-- Topics will be inserted here -->
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button onclick="regenerateTopics()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Generate New Topics
+                    </button>
+                    <button onclick="backToTopicForm()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                        ← Back
+                    </button>
+                </div>
+            </div>
+
+            <!-- Final Demo Card Section (hidden by default) -->
+            <div id="topic-final-section" class="hidden">
+                <div id="demo-card-capture" class="bg-white rounded-xl shadow-md overflow-hidden border-2 border-gray-200 mb-6">
+                    <div class="bg-ican-primary text-white p-6 text-center">
+                        <h2 class="text-xl font-bold">Teaching Demo Assignment</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <span class="text-sm text-gray-500">Applicant</span>
+                                    <p class="font-semibold text-gray-800" id="final-name"></p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Experience</span>
+                                    <p class="font-semibold text-gray-800" id="final-experience"></p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Student Level</span>
+                                    <p class="font-semibold text-gray-800" id="final-level"></p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500">Subject</span>
+                                    <p class="font-semibold text-gray-800" id="final-subject"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-ican-dark rounded-lg p-6 text-center mb-6">
+                            <div class="text-ican-light text-xs uppercase tracking-widest mb-2">Your Topic</div>
+                            <div class="text-white text-xl font-bold" id="final-topic"></div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <h3 class="text-sm font-semibold text-ican-primary mb-3">Demo Guidelines</h3>
+                            <ul class="text-sm text-gray-600 space-y-2">
+                                <li><strong>Duration:</strong> Maximum 20 minutes</li>
+                                <li><strong>Audience:</strong> Teachers will act as students</li>
+                                <li><strong>Materials:</strong> Optional - you may use PC, whiteboard, handouts, or any teaching aids</li>
+                                <li><strong>Preparation:</strong> Prep time is up to you</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-4 text-center border-t">
+                        <p class="text-ican-primary font-semibold">Good luck with your demo!</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="downloadDemoCard()" class="flex-1 min-w-[120px] bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download as Image
+                    </button>
+                    <button onclick="useTopicForAssessment()" class="flex-1 min-w-[120px] bg-ican-primary text-white px-4 py-3 rounded-lg hover:bg-ican-dark transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        Start Assessment
+                    </button>
+                    <button onclick="newApplicantTopic()" class="flex-1 min-w-[120px] bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        New Applicant
+                    </button>
+                </div>
+            </div>
+
+            <!-- Browse All Topics Section -->
+            <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-ican-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    Browse All Topics
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Subject</label>
+                        <select id="tg-filter-subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" onchange="renderTopicsList()">
+                            <option value="all">All Subjects</option>
+                            <option value="english">English / ESL</option>
+                            <option value="science">Science</option>
+                            <option value="math">Mathematics</option>
+                            <option value="coding">Coding / Computer Science</option>
+                            <option value="social-studies">Social Studies / History</option>
+                            <option value="art">Art & Creativity</option>
+                            <option value="music">Music</option>
+                            <option value="health">Health & Wellness</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Level</label>
+                        <select id="tg-filter-level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" onchange="renderTopicsList()">
+                            <option value="all">All Levels</option>
+                            <option value="preschool">Preschool (Ages 3-5)</option>
+                            <option value="elementary-lower">Elementary - Lower (Grades 1-2)</option>
+                            <option value="elementary-upper">Elementary - Upper (Grades 3-5)</option>
+                            <option value="middle">Middle School (Grades 6-8)</option>
+                            <option value="high">High School (Grades 9-12)</option>
+                            <option value="adult-beginner">Adult - Beginner</option>
+                            <option value="adult-intermediate">Adult - Intermediate</option>
+                            <option value="adult-advanced">Adult - Advanced</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="topics-list-container" class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                    <!-- Topics list will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Tab -->
+        <div id="form-tab">
+            <!-- Progress Bar -->
+            <div class="mb-6 no-print">
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Evaluation Progress</span>
+                    <span id="progress-text">0 of 11 criteria rated</span>
+                </div>
+                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-ican-primary transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Applicant Info -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-ican-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Applicant Information
+                </h2>
+                <div id="applicant-info-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Applicant Name *</label>
+                        <input type="text" id="applicant-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" placeholder="Enter name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Demo</label>
+                        <input type="date" id="demo-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Assessor Name</label>
+                        <input type="text" id="assessor-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" placeholder="Enter assessor">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Topic</label>
+                        <input type="text" id="topic" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" placeholder="Lesson topic">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Level Targeted</label>
+                        <select id="level-targeted" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent">
+                            <option value="">Select level</option>
+                            <option value="Kinder">Kinder</option>
+                            <option value="Grade 1">Grade 1</option>
+                            <option value="Grade 2">Grade 2</option>
+                            <option value="Grade 3">Grade 3</option>
+                            <option value="Grade 4">Grade 4</option>
+                            <option value="Grade 5">Grade 5</option>
+                            <option value="Grade 6">Grade 6</option>
+                            <option value="Mid 1">Mid 1</option>
+                            <option value="Mid 2">Mid 2</option>
+                            <option value="Mid 3">Mid 3</option>
+                            <option value="High 1">High 1</option>
+                            <option value="High 2">High 2</option>
+                            <option value="High 3">High 3</option>
+                            <option value="Uni">Uni</option>
+                            <option value="Adult">Adult</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ICAN Assessment Score</label>
+                        <input type="text" id="assessment-score" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" placeholder="Enter score">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Criteria -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-ican-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    Evaluation Criteria
+                </h2>
+
+                <div id="criteria-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Criteria cards will be inserted here -->
+                </div>
+
+                <!-- Score Summary -->
+                <div class="mt-6 grid grid-cols-3 gap-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-green-600" id="met-total">0</div>
+                        <div class="text-sm text-green-700">Met</div>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-yellow-600" id="ni-total">0</div>
+                        <div class="text-sm text-yellow-700">Needs Improvement</div>
+                    </div>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-red-600" id="fail-total">0</div>
+                        <div class="text-sm text-red-700">Fail</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Comments -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-ican-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                    </svg>
+                    Additional Comments
+                </h2>
+                <textarea id="additional-comments" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" placeholder="Enter any additional feedback or observations..."></textarea>
+            </div>
+
+            <!-- Final Assessment -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-ican-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Final Assessment
+                </h2>
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="setFinalResult('PASS')" id="btn-pass" class="final-btn flex-1 min-w-[120px] py-4 px-6 rounded-lg border-2 border-green-500 text-green-700 font-semibold hover:bg-green-50 transition-all">
+                        <span class="text-2xl block">✓</span>
+                        PASS
+                    </button>
+                    <button onclick="setFinalResult('WAITLIST')" id="btn-waitlist" class="final-btn flex-1 min-w-[120px] py-4 px-6 rounded-lg border-2 border-yellow-500 text-yellow-700 font-semibold hover:bg-yellow-50 transition-all">
+                        <span class="text-2xl block">⏳</span>
+                        WAITLIST
+                    </button>
+                    <button onclick="setFinalResult('FAIL')" id="btn-fail" class="final-btn flex-1 min-w-[120px] py-4 px-6 rounded-lg border-2 border-red-500 text-red-700 font-semibold hover:bg-red-50 transition-all">
+                        <span class="text-2xl block">✗</span>
+                        FAIL
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Feedback -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-ican-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    AI Feedback Generator
+                </h2>
+                <button onclick="generateFeedback()" class="no-print w-full md:w-auto bg-ican-primary text-white px-6 py-3 rounded-lg hover:bg-ican-dark transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Generate Professional Feedback
+                </button>
+                <div id="loading-message" class="hidden mt-4 flex items-center gap-2 text-ican-primary">
+                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    </svg>
+                    Generating feedback...
+                </div>
+                <div id="feedback-output" class="mt-4 p-4 bg-gray-50 rounded-lg border hidden">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-gray-800">AI Generated Feedback:</h3>
+                        <button onclick="copyFeedback()" class="no-print text-ican-primary hover:text-ican-dark flex items-center gap-1 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="feedback-content" class="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap"></div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="no-print flex flex-wrap gap-3 mb-6">
+                <button onclick="saveAssessment()" id="btn-save" disabled class="bg-gray-300 text-gray-500 px-6 py-3 rounded-lg cursor-not-allowed transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                    </svg>
+                    Save Assessment
+                </button>
+                <button onclick="sendToNotion()" id="btn-notion" disabled class="bg-gray-300 text-gray-500 px-6 py-3 rounded-lg cursor-not-allowed transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Send to Notion
+                </button>
+                <button onclick="downloadAsImage()" id="btn-download" disabled class="bg-gray-300 text-gray-500 px-6 py-3 rounded-lg cursor-not-allowed transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Download Image
+                </button>
+                <button onclick="clearForm()" class="bg-red-100 text-red-700 px-6 py-3 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Clear Form
+                </button>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history-tab" class="hidden">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800">Assessment History</h2>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <input type="text" id="search-input" class="flex-1 md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ican-primary focus:border-transparent" placeholder="Search by name, topic...">
+                        <button onclick="searchAssessments()" class="bg-ican-primary text-white px-4 py-2 rounded-lg hover:bg-ican-dark">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="history-list" class="space-y-3">
+                    <!-- History items will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+        <span id="toast-message">Saved successfully!</span>
+    </div>
+
+    <!-- Topics Database - Must load before main script -->
+    <script src="topics.js"></script>
+
+    <script>
+        // Criteria list
+        const criteria = [
+            "Lesson Objective is Clear",
+            "Topic Knowledge / Mastery",
+            "Student Engagement",
+            "Clarity of Instructions",
+            "Use of Teaching Aids",
+            "Classroom Management",
+            "Use of English (Fluency/Grammar)",
+            "Accent / Pronunciation",
+            "Timing and Pacing",
+            "Creativity / Confidence",
+            "Overall Delivery"
+        ];
+
+        let currentAssessmentId = null;
+        let finalResult = '';
+        let feedbackGenerated = false;
+        let assessmentSaved = false;
+        let sentToNotion = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCriteria();
+            document.getElementById('demo-date').valueAsDate = new Date();
+            loadAssessments();
+            updateButtonStates();
+            initTopicGenerator();
+        });
+
+        // Update button states based on workflow
+        // Flow: Generate Feedback -> Save -> Send to Notion -> Download Image
+        function updateButtonStates() {
+            const saveBtn = document.getElementById('btn-save');
+            const downloadBtn = document.getElementById('btn-download');
+            const notionBtn = document.getElementById('btn-notion');
+
+            // Save button - enabled only after feedback is generated
+            if (feedbackGenerated) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-ican-primary', 'text-white', 'hover:bg-ican-dark');
+            } else {
+                saveBtn.disabled = true;
+                saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.remove('bg-ican-primary', 'text-white', 'hover:bg-ican-dark');
+            }
+
+            // Notion button - enabled only after assessment is saved
+            if (assessmentSaved) {
+                notionBtn.disabled = false;
+                notionBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                notionBtn.classList.add('bg-gray-800', 'text-white', 'hover:bg-gray-900');
+            } else {
+                notionBtn.disabled = true;
+                notionBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                notionBtn.classList.remove('bg-gray-800', 'text-white', 'hover:bg-gray-900');
+            }
+
+            // Download button - enabled only after sent to Notion
+            if (sentToNotion) {
+                downloadBtn.disabled = false;
+                downloadBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                downloadBtn.classList.add('bg-purple-600', 'text-white', 'hover:bg-purple-700');
+            } else {
+                downloadBtn.disabled = true;
+                downloadBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                downloadBtn.classList.remove('bg-purple-600', 'text-white', 'hover:bg-purple-700');
+            }
+        }
+
+        // Download as image function
+        async function downloadAsImage() {
+            if (!assessmentSaved) {
+                showToast('Please save the assessment first', 'error');
+                return;
+            }
+
+            showToast('Generating image...', 'info');
+
+            // Hide only action buttons, keep header visible
+            const noCapture = document.querySelectorAll('.no-print');
+            noCapture.forEach(el => el.style.display = 'none');
+
+            // Constrain header width to match content
+            const header = document.querySelector('header');
+            const originalHeaderStyle = header.style.cssText;
+            header.style.cssText = 'max-width: 72rem; margin: 0 auto; border-radius: 8px 8px 0 0;';
+
+            // Replace input/select/textarea with visible text for capture
+            const formData = getFormData();
+            const replacements = [];
+
+            // Replace main form fields
+            const fields = [
+                { id: 'applicant-name', value: formData.applicant_name },
+                { id: 'demo-date', value: formData.demo_date },
+                { id: 'assessor-name', value: formData.assessor_name },
+                { id: 'topic', value: formData.topic },
+                { id: 'level-targeted', value: formData.level_targeted },
+                { id: 'assessment-score', value: formData.assessment_score },
+                { id: 'additional-comments', value: formData.additional_comments }
+            ];
+
+            fields.forEach(field => {
+                const el = document.getElementById(field.id);
+                if (el) {
+                    const span = document.createElement('span');
+                    span.textContent = field.value || '-';
+                    span.style.cssText = 'display: block; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb; font-size: 14px; min-height: 20px;';
+                    el.parentNode.insertBefore(span, el);
+                    el.style.display = 'none';
+                    replacements.push({ el, span });
+                }
+            });
+
+            // Replace criteria comment fields with visible text
+            const commentFields = document.querySelectorAll('input[data-comment]');
+            commentFields.forEach(input => {
+                const value = input.value;
+                if (value) {
+                    const span = document.createElement('span');
+                    span.textContent = value;
+                    span.style.cssText = 'display: block; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 4px; background: #fff; font-size: 12px; margin-top: 4px; color: #666;';
+                    input.parentNode.insertBefore(span, input);
+                }
+                input.style.display = 'none';
+                replacements.push({ el: input, span: value ? input.previousSibling : null });
+            });
+
+            try {
+                // Capture the whole page including header
+                const canvas = await html2canvas(document.body, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    ignoreElements: (element) => {
+                        return element.id === 'history-tab' || element.id === 'toast';
+                    }
+                });
+
+                // Create download link
+                const link = document.createElement('a');
+                const applicantName = formData.applicant_name || 'assessment';
+                const date = formData.demo_date || new Date().toISOString().split('T')[0];
+                link.download = `${applicantName.replace(/\s+/g, '_')}_${date}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                showToast('Image downloaded!');
+            } catch (error) {
+                console.error('Error generating image:', error);
+                showToast('Error generating image', 'error');
+            } finally {
+                // Restore hidden elements
+                noCapture.forEach(el => el.style.display = '');
+
+                // Restore header style
+                header.style.cssText = originalHeaderStyle;
+
+                // Restore original inputs and remove spans
+                replacements.forEach(({ el, span }) => {
+                    el.style.display = '';
+                    if (span && span.parentNode) span.remove();
+                });
+            }
+        }
+
+        // Render criteria cards
+        function renderCriteria() {
+            const container = document.getElementById('criteria-container');
+            container.innerHTML = criteria.map((c, i) => `
+                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${i === 10 ? 'md:col-span-2' : ''}">
+                    <div class="flex items-center justify-between gap-4">
+                        <span class="font-medium text-gray-800 text-sm">${i + 1}. ${c}</span>
+                        <div class="flex gap-1 shrink-0" data-criteria="${i}">
+                            <button onclick="setRating(${i}, 'met')" class="rating-btn w-16 py-1.5 rounded text-xs font-semibold border-2 border-transparent bg-white text-gray-500 hover:border-green-500 hover:text-green-600 transition-all">
+                                Met
+                            </button>
+                            <button onclick="setRating(${i}, 'ni')" class="rating-btn w-16 py-1.5 rounded text-xs font-semibold border-2 border-transparent bg-white text-gray-500 hover:border-amber-500 hover:text-amber-600 transition-all">
+                                N.I.
+                            </button>
+                            <button onclick="setRating(${i}, 'fail')" class="rating-btn w-16 py-1.5 rounded text-xs font-semibold border-2 border-transparent bg-white text-gray-500 hover:border-red-500 hover:text-red-600 transition-all">
+                                Fail
+                            </button>
+                        </div>
+                    </div>
+                    <input type="text" data-comment="${i}" class="mt-2 w-full px-3 py-1.5 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-ican-primary focus:border-transparent bg-white" placeholder="Optional comment...">
+                </div>
+            `).join('');
+        }
+
+        // Set rating for a criteria
+        function setRating(index, rating) {
+            const container = document.querySelector(`[data-criteria="${index}"]`);
+            const buttons = container.querySelectorAll('.rating-btn');
+
+            // Reset all buttons to default state
+            buttons.forEach(btn => {
+                btn.classList.remove('met', 'ni', 'fail', 'bg-green-500', 'bg-amber-500', 'bg-red-500', 'text-white', 'border-green-600', 'border-amber-600', 'border-red-600');
+                btn.classList.add('bg-white', 'text-gray-500', 'border-transparent');
+            });
+
+            // Style the selected button
+            const btn = buttons[rating === 'met' ? 0 : rating === 'ni' ? 1 : 2];
+            btn.classList.remove('bg-white', 'text-gray-500', 'border-transparent');
+            btn.classList.add(rating);
+
+            if (rating === 'met') {
+                btn.classList.add('bg-green-500', 'text-white', 'border-green-600');
+            } else if (rating === 'ni') {
+                btn.classList.add('bg-amber-500', 'text-white', 'border-amber-600');
+            } else {
+                btn.classList.add('bg-red-500', 'text-white', 'border-red-600');
+            }
+
+            calculateScores();
+        }
+
+        // Calculate and update scores
+        function calculateScores() {
+            const met = document.querySelectorAll('.rating-btn.met').length;
+            const ni = document.querySelectorAll('.rating-btn.ni').length;
+            const fail = document.querySelectorAll('.rating-btn.fail').length;
+
+            document.getElementById('met-total').textContent = met;
+            document.getElementById('ni-total').textContent = ni;
+            document.getElementById('fail-total').textContent = fail;
+
+            // Update progress
+            const rated = met + ni + fail;
+            const progress = (rated / criteria.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress-text').textContent = `${rated} of ${criteria.length} criteria rated`;
+
+            // Auto-set final result
+            if (fail >= 4) {
+                setFinalResult('FAIL');
+            } else if (ni >= 4 || (met < 7 && fail > 0)) {
+                setFinalResult('WAITLIST');
+            } else if (met >= 8) {
+                setFinalResult('PASS');
+            }
+        }
+
+        // Set final result
+        function setFinalResult(result) {
+            finalResult = result;
+            document.querySelectorAll('.final-btn').forEach(btn => {
+                btn.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-red-500', 'text-white', 'border-4');
+            });
+
+            const btn = document.getElementById(`btn-${result.toLowerCase()}`);
+            if (result === 'PASS') {
+                btn.classList.add('bg-green-500', 'text-white', 'border-4');
+            } else if (result === 'WAITLIST') {
+                btn.classList.add('bg-yellow-500', 'text-white', 'border-4');
+            } else {
+                btn.classList.add('bg-red-500', 'text-white', 'border-4');
+            }
+        }
+
+        // Show tab
+        function showTab(tab) {
+            document.getElementById('form-tab').classList.toggle('hidden', tab !== 'form');
+            document.getElementById('history-tab').classList.toggle('hidden', tab !== 'history');
+            document.getElementById('topic-generator-tab').classList.toggle('hidden', tab !== 'topic-generator');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white/20');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('bg-white/20');
+
+            if (tab === 'history') {
+                loadAssessments();
+            }
+            if (tab === 'topic-generator') {
+                initTopicGenerator();
+            }
+        }
+
+        // Get form data
+        function getFormData() {
+            const criteriaData = criteria.map((c, i) => {
+                const container = document.querySelector(`[data-criteria="${i}"]`);
+                const buttons = container.querySelectorAll('.rating-btn');
+                let rating = '';
+                if (buttons[0].classList.contains('met')) rating = 'met';
+                else if (buttons[1].classList.contains('ni')) rating = 'ni';
+                else if (buttons[2].classList.contains('fail')) rating = 'fail';
+
+                const comment = document.querySelector(`[data-comment="${i}"]`).value;
+                return { name: c, rating, comment };
+            });
+
+            return {
+                applicant_name: document.getElementById('applicant-name').value,
+                demo_date: document.getElementById('demo-date').value,
+                assessor_name: document.getElementById('assessor-name').value,
+                topic: document.getElementById('topic').value,
+                level_targeted: document.getElementById('level-targeted').value,
+                assessment_score: document.getElementById('assessment-score').value,
+                criteria: criteriaData,
+                additional_comments: document.getElementById('additional-comments').value,
+                final_result: finalResult,
+                met_total: parseInt(document.getElementById('met-total').textContent),
+                ni_total: parseInt(document.getElementById('ni-total').textContent),
+                fail_total: parseInt(document.getElementById('fail-total').textContent),
+                ai_feedback: document.getElementById('feedback-content').textContent
+            };
+        }
+
+        // Save assessment
+        async function saveAssessment() {
+            // Check if feedback was generated first
+            if (!feedbackGenerated) {
+                showToast('Please generate professional feedback first', 'error');
+                return;
+            }
+
+            const data = getFormData();
+            if (!data.applicant_name) {
+                showToast('Please enter applicant name', 'error');
+                return;
+            }
+
+            try {
+                const url = currentAssessmentId
+                    ? `/api/assessments/${currentAssessmentId}`
+                    : '/api/assessments';
+                const method = currentAssessmentId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (!currentAssessmentId) {
+                    currentAssessmentId = result.id;
+                }
+                showToast('Assessment saved successfully!');
+
+                // Enable print button after save
+                assessmentSaved = true;
+                updateButtonStates();
+            } catch (error) {
+                showToast('Error saving assessment', 'error');
+            }
+        }
+
+        // Send to Notion
+        async function sendToNotion() {
+            if (!assessmentSaved) {
+                showToast('Please save the assessment first', 'error');
+                return;
+            }
+
+            const data = getFormData();
+
+            // Build detailed criteria breakdown
+            let criteriaDetails = '';
+            data.criteria.forEach(c => {
+                const ratingText = c.rating === 'met' ? 'MET' : c.rating === 'ni' ? 'NEEDS IMPROVEMENT' : c.rating === 'fail' ? 'FAIL' : 'Not rated';
+                criteriaDetails += `${c.name}: ${ratingText}`;
+                if (c.comment) {
+                    criteriaDetails += ` (${c.comment})`;
+                }
+                criteriaDetails += '\n';
+            });
+
+            showToast('Sending to Notion...', 'info');
+
+            try {
+                const response = await fetch('/api/send-to-notion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        applicantName: data.applicant_name,
+                        demoDate: data.demo_date,
+                        assessorName: data.assessor_name,
+                        topic: data.topic,
+                        levelTargeted: data.level_targeted,
+                        assessmentScore: data.assessment_score,
+                        criteriaDetails,
+                        additionalComments: data.additional_comments,
+                        metTotal: data.met_total,
+                        niTotal: data.ni_total,
+                        failTotal: data.fail_total,
+                        finalAssessment: data.final_result,
+                        aiFeedback: data.ai_feedback
+                    })
+                });
+
+                const result = await response.json();
+                if (result.error) throw new Error(result.error);
+
+                showToast('Sent to Notion successfully!');
+
+                // Enable download button after Notion sync
+                sentToNotion = true;
+                updateButtonStates();
+            } catch (error) {
+                console.error('Notion error:', error);
+                showToast(`Notion error: ${error.message}`, 'error');
+            }
+        }
+
+        // Load assessments
+        async function loadAssessments() {
+            try {
+                const response = await fetch('/api/assessments');
+                const assessments = await response.json();
+                renderHistory(assessments);
+            } catch (error) {
+                console.error('Error loading assessments:', error);
+            }
+        }
+
+        // Search assessments
+        async function searchAssessments() {
+            const search = document.getElementById('search-input').value;
+            try {
+                const response = await fetch(`/api/assessments?search=${encodeURIComponent(search)}`);
+                const assessments = await response.json();
+                renderHistory(assessments);
+            } catch (error) {
+                console.error('Error searching assessments:', error);
+            }
+        }
+
+        // Render history
+        function renderHistory(assessments) {
+            const container = document.getElementById('history-list');
+            if (assessments.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No assessments found.</p>';
+                return;
+            }
+
+            container.innerHTML = assessments.map(a => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-ican-primary transition-colors cursor-pointer" onclick="loadAssessment(${a.id})">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-semibold text-gray-800">${a.applicant_name}</h3>
+                            <p class="text-sm text-gray-600">${a.topic || 'No topic'} • ${a.level_targeted || 'No level'}</p>
+                            <p class="text-xs text-gray-400">${new Date(a.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium ${
+                                a.final_result === 'PASS' ? 'bg-green-100 text-green-700' :
+                                a.final_result === 'WAITLIST' ? 'bg-yellow-100 text-yellow-700' :
+                                a.final_result === 'FAIL' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                            }">${a.final_result || 'Pending'}</span>
+                            <button onclick="event.stopPropagation(); downloadHistoryAssessment(${a.id})" class="text-purple-500 hover:text-purple-700 p-1" title="Download Image">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteAssessment(${a.id})" class="text-red-500 hover:text-red-700 p-1" title="Delete">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load assessment
+        async function loadAssessment(id) {
+            try {
+                const response = await fetch(`/api/assessments/${id}`);
+                const a = await response.json();
+
+                currentAssessmentId = a.id;
+                document.getElementById('applicant-name').value = a.applicant_name || '';
+                document.getElementById('demo-date').value = a.demo_date || '';
+                document.getElementById('assessor-name').value = a.assessor_name || '';
+                document.getElementById('topic').value = a.topic || '';
+                document.getElementById('level-targeted').value = a.level_targeted || '';
+                document.getElementById('assessment-score').value = a.assessment_score || '';
+                document.getElementById('additional-comments').value = a.additional_comments || '';
+
+                // Load criteria
+                const criteriaData = JSON.parse(a.criteria || '[]');
+                criteriaData.forEach((c, i) => {
+                    if (c.rating) {
+                        setRating(i, c.rating);
+                    }
+                    document.querySelector(`[data-comment="${i}"]`).value = c.comment || '';
+                });
+
+                if (a.final_result) {
+                    setFinalResult(a.final_result);
+                }
+
+                if (a.ai_feedback) {
+                    document.getElementById('feedback-content').textContent = a.ai_feedback;
+                    document.getElementById('feedback-output').classList.remove('hidden');
+                }
+
+                showTab('form');
+                showToast('Assessment loaded');
+            } catch (error) {
+                showToast('Error loading assessment', 'error');
+            }
+        }
+
+        // Delete assessment
+        async function deleteAssessment(id) {
+            if (!confirm('Are you sure you want to delete this assessment?')) return;
+
+            try {
+                await fetch(`/api/assessments/${id}`, { method: 'DELETE' });
+                loadAssessments();
+                showToast('Assessment deleted');
+            } catch (error) {
+                showToast('Error deleting assessment', 'error');
+            }
+        }
+
+        // Download history assessment as image
+        async function downloadHistoryAssessment(id) {
+            try {
+                const response = await fetch(`/api/assessments/${id}`);
+                const a = await response.json();
+
+                // Switch to form tab and populate data
+                showTab('form');
+
+                // Populate form fields
+                document.getElementById('applicant-name').value = a.applicant_name || '';
+                document.getElementById('demo-date').value = a.demo_date || '';
+                document.getElementById('assessor-name').value = a.assessor_name || '';
+                document.getElementById('topic').value = a.topic || '';
+                document.getElementById('level-targeted').value = a.level_targeted || '';
+                document.getElementById('assessment-score').value = a.assessment_score || '';
+                document.getElementById('additional-comments').value = a.additional_comments || '';
+
+                // Load criteria ratings
+                const criteriaData = JSON.parse(a.criteria || '{}');
+                criteria.forEach((c, i) => {
+                    if (criteriaData[c]) {
+                        setRating(i, criteriaData[c].rating);
+                        const commentInput = document.querySelector(`input[data-comment="${i}"]`);
+                        if (commentInput) commentInput.value = criteriaData[c].comment || '';
+                    }
+                });
+
+                // Set final result
+                if (a.final_result) {
+                    setFinalResult(a.final_result);
+                }
+
+                // Load AI feedback if available
+                if (a.ai_feedback) {
+                    document.getElementById('feedback-output').classList.remove('hidden');
+                    document.getElementById('feedback-content').textContent = a.ai_feedback;
+                }
+
+                // Small delay to ensure DOM is updated, then download as image
+                setTimeout(async () => {
+                    showToast('Generating image...', 'info');
+
+                    // Hide only action buttons, keep header visible
+                    const noCapture = document.querySelectorAll('.no-print');
+                    noCapture.forEach(el => el.style.display = 'none');
+
+                    // Constrain header width to match content
+                    const header = document.querySelector('header');
+                    const originalHeaderStyle = header.style.cssText;
+                    header.style.cssText = 'max-width: 72rem; margin: 0 auto; border-radius: 8px 8px 0 0;';
+
+                    // Replace input/select/textarea with visible text for capture
+                    const replacements = [];
+                    const fields = [
+                        { id: 'applicant-name', value: a.applicant_name },
+                        { id: 'demo-date', value: a.demo_date },
+                        { id: 'assessor-name', value: a.assessor_name },
+                        { id: 'topic', value: a.topic },
+                        { id: 'level-targeted', value: a.level_targeted },
+                        { id: 'assessment-score', value: a.assessment_score },
+                        { id: 'additional-comments', value: a.additional_comments }
+                    ];
+
+                    fields.forEach(field => {
+                        const el = document.getElementById(field.id);
+                        if (el) {
+                            const span = document.createElement('span');
+                            span.textContent = field.value || '-';
+                            span.style.cssText = 'display: block; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb; font-size: 14px; min-height: 20px;';
+                            el.parentNode.insertBefore(span, el);
+                            el.style.display = 'none';
+                            replacements.push({ el, span });
+                        }
+                    });
+
+                    // Replace criteria comment fields with visible text
+                    const commentFields = document.querySelectorAll('input[data-comment]');
+                    commentFields.forEach(input => {
+                        const value = input.value;
+                        if (value) {
+                            const span = document.createElement('span');
+                            span.textContent = value;
+                            span.style.cssText = 'display: block; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 4px; background: #fff; font-size: 12px; margin-top: 4px; color: #666;';
+                            input.parentNode.insertBefore(span, input);
+                        }
+                        input.style.display = 'none';
+                        replacements.push({ el: input, span: value ? input.previousSibling : null });
+                    });
+
+                    try {
+                        // Capture the whole page including header
+                        const canvas = await html2canvas(document.body, {
+                            scale: 2,
+                            useCORS: true,
+                            backgroundColor: '#ffffff',
+                            logging: false,
+                            ignoreElements: (element) => {
+                                return element.id === 'history-tab' || element.id === 'toast';
+                            }
+                        });
+
+                        // Create download link
+                        const link = document.createElement('a');
+                        const applicantName = a.applicant_name || 'assessment';
+                        const date = a.demo_date || new Date().toISOString().split('T')[0];
+                        link.download = `${applicantName.replace(/\s+/g, '_')}_${date}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+
+                        showToast('Image downloaded!');
+                    } catch (error) {
+                        console.error('Error generating image:', error);
+                        showToast('Error generating image', 'error');
+                    } finally {
+                        // Restore hidden elements
+                        noCapture.forEach(el => el.style.display = '');
+
+                        // Restore header style
+                        header.style.cssText = originalHeaderStyle;
+
+                        // Restore original inputs and remove spans
+                        replacements.forEach(({ el, span }) => {
+                            el.style.display = '';
+                            if (span && span.parentNode) span.remove();
+                        });
+                    }
+                }, 300);
+
+            } catch (error) {
+                showToast('Error loading assessment', 'error');
+            }
+        }
+
+        // Generate AI feedback
+        async function generateFeedback() {
+            const loading = document.getElementById('loading-message');
+            const output = document.getElementById('feedback-output');
+            const content = document.getElementById('feedback-content');
+
+            const data = getFormData();
+
+            // Validation - check required fields (additional_comments is optional)
+            const missingFields = [];
+            if (!data.applicant_name) missingFields.push('Applicant Name');
+            if (!data.demo_date) missingFields.push('Date of Demo');
+            if (!data.assessor_name) missingFields.push('Assessor Name');
+            if (!data.topic) missingFields.push('Topic');
+            if (!data.level_targeted) missingFields.push('Level Targeted');
+            if (!data.assessment_score) missingFields.push('ICAN Assessment Score');
+            if (!data.final_result) missingFields.push('Final Assessment');
+
+            // Check if ALL criteria are rated
+            const ratedCount = data.met_total + data.ni_total + data.fail_total;
+            const totalCriteria = 11;
+            if (ratedCount < totalCriteria) {
+                const unratedCount = totalCriteria - ratedCount;
+                missingFields.push(`${unratedCount} Evaluation Criteria (${ratedCount}/${totalCriteria} rated)`);
+            }
+
+            if (missingFields.length > 0) {
+                showToast(`Please fill in: ${missingFields.join(', ')}`, 'error');
+                return;
+            }
+
+            loading.classList.remove('hidden');
+            output.classList.add('hidden');
+
+            // Build detailed criteria breakdown with ratings AND comments
+            let criteriaDetails = '';
+            data.criteria.forEach(c => {
+                const ratingText = c.rating === 'met' ? 'MET' : c.rating === 'ni' ? 'NEEDS IMPROVEMENT' : c.rating === 'fail' ? 'FAIL' : 'Not rated';
+                criteriaDetails += `- ${c.name}: ${ratingText}`;
+                if (c.comment) {
+                    criteriaDetails += ` (Note: ${c.comment})`;
+                }
+                criteriaDetails += '\n';
+            });
+
+            try {
+                const response = await fetch('/api/generate-feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        applicantName: data.applicant_name,
+                        topic: data.topic,
+                        levelTargeted: data.level_targeted,
+                        assessmentScore: data.assessment_score,
+                        criteriaDetails,
+                        additionalComments: data.additional_comments,
+                        metTotal: data.met_total,
+                        niTotal: data.ni_total,
+                        failTotal: data.fail_total,
+                        finalAssessment: data.final_result
+                    })
+                });
+
+                const result = await response.json();
+                if (result.error) throw new Error(result.error);
+
+                content.textContent = result.feedback;
+                output.classList.remove('hidden');
+
+                // Enable save button after feedback is generated
+                feedbackGenerated = true;
+                updateButtonStates();
+            } catch (error) {
+                content.textContent = `Error: ${error.message}`;
+                output.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        // Copy feedback
+        function copyFeedback() {
+            const content = document.getElementById('feedback-content').textContent;
+            navigator.clipboard.writeText(content);
+            showToast('Feedback copied to clipboard!');
+        }
+
+        // =============================================
+        // TOPIC GENERATOR FUNCTIONS
+        // =============================================
+
+        // Topic Generator State
+        let tgCurrentData = {
+            name: '',
+            experience: '',
+            studentLevel: '',
+            subject: '',
+            subjectName: '',
+            subjectIcon: '',
+            selectedTopic: ''
+        };
+
+        // Note: experienceGuidance and studentLevelDescriptions are defined in topics.js
+
+        // Initialize Topic Generator
+        function initTopicGenerator() {
+            const form = document.getElementById('topicGeneratorForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    generateTopicsForDemo();
+                });
+            }
+            renderTopicsList();
+        }
+
+        // Generate topics for demo
+        function generateTopicsForDemo() {
+            const teacherName = document.getElementById('tg-teacher-name').value;
+            const experience = document.getElementById('tg-experience').value;
+            const studentLevel = document.getElementById('tg-student-level').value;
+            let subject = document.getElementById('tg-subject').value;
+
+            if (!teacherName || !experience || !studentLevel || !subject) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Handle "Surprise Me" option
+            if (subject === 'random') {
+                const subjects = Object.keys(topicsDatabase);
+                subject = subjects[Math.floor(Math.random() * subjects.length)];
+            }
+
+            // Get topics for this subject and level
+            const subjectData = topicsDatabase[subject];
+            let topics = subjectData.topics[studentLevel];
+
+            // Fallback if no topics for exact level
+            if (!topics || topics.length === 0) {
+                const availableLevels = Object.keys(subjectData.topics).filter(
+                    level => subjectData.topics[level] && subjectData.topics[level].length > 0
+                );
+                if (availableLevels.length > 0) {
+                    const randomLevel = availableLevels[Math.floor(Math.random() * availableLevels.length)];
+                    topics = subjectData.topics[randomLevel];
+                }
+            }
+
+            // Filter topics based on teacher experience
+            // Topics in each level are roughly ordered: simpler first, complex later
+            // New/Beginner: first 40% (easier topics)
+            // Intermediate: middle 40% (moderate topics)
+            // Experienced/Expert: last 40% (harder topics)
+            // We use 40% with overlap so there's variety
+            const filteredTopics = filterTopicsByExperience(topics, experience);
+
+            // Store current data
+            tgCurrentData = {
+                name: teacherName,
+                experience: experience,
+                studentLevel: studentLevel,
+                subject: subject,
+                subjectName: subjectData.name,
+                subjectIcon: subjectData.icon
+            };
+
+            // Select 3 random unique topics from the filtered set
+            const selectedTopics = getRandomTopicsForDemo(filteredTopics, 3);
+
+            // Display selection screen
+            displayTopicSelection(selectedTopics);
+        }
+
+        // Filter topics based on teacher experience level
+        // More experienced teachers get more challenging topics within the same student level
+        function filterTopicsByExperience(topics, experience) {
+            if (!topics || topics.length === 0) return topics;
+
+            const total = topics.length;
+            let startIndex, endIndex;
+
+            switch (experience) {
+                case 'new':
+                    // New teachers (0-1 years): First 40% - simpler, foundational topics
+                    startIndex = 0;
+                    endIndex = Math.ceil(total * 0.4);
+                    break;
+                case 'beginner':
+                    // Beginner (1-3 years): First 50% - still relatively accessible
+                    startIndex = 0;
+                    endIndex = Math.ceil(total * 0.5);
+                    break;
+                case 'intermediate':
+                    // Intermediate (3-5 years): Middle 60% - moderate complexity
+                    startIndex = Math.floor(total * 0.2);
+                    endIndex = Math.ceil(total * 0.8);
+                    break;
+                case 'experienced':
+                    // Experienced (5-10 years): Last 60% - more challenging
+                    startIndex = Math.floor(total * 0.4);
+                    endIndex = total;
+                    break;
+                case 'expert':
+                    // Expert (10+ years): Last 50% - most challenging topics
+                    startIndex = Math.floor(total * 0.5);
+                    endIndex = total;
+                    break;
+                default:
+                    // Default: all topics
+                    startIndex = 0;
+                    endIndex = total;
+            }
+
+            // Ensure we have at least 3 topics to choose from
+            if (endIndex - startIndex < 3) {
+                startIndex = Math.max(0, endIndex - 3);
+            }
+
+            return topics.slice(startIndex, endIndex);
+        }
+
+        // Get random topics
+        function getRandomTopicsForDemo(topics, count) {
+            const shuffled = [...topics].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+
+        // Display topic selection
+        function displayTopicSelection(selectedTopics) {
+            // Hide input, show selection
+            document.getElementById('topic-input-section').classList.add('hidden');
+            document.getElementById('topic-selection-section').classList.remove('hidden');
+            document.getElementById('topic-final-section').classList.add('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Display info
+            document.getElementById('tg-display-name').textContent = tgCurrentData.name;
+            document.getElementById('tg-display-experience').textContent = experienceGuidance[tgCurrentData.experience];
+            document.getElementById('tg-display-level').textContent = studentLevelDescriptions[tgCurrentData.studentLevel];
+
+            // Subject badge
+            const badge = document.getElementById('tg-subject-badge');
+            badge.textContent = `${tgCurrentData.subjectIcon} ${tgCurrentData.subjectName}`;
+
+            // Display the 3 topics
+            const container = document.getElementById('topic-options-container');
+            container.innerHTML = selectedTopics.map((topic, index) => `
+                <div class="topic-option cursor-pointer border-2 border-gray-200 rounded-lg p-4 hover:border-ican-primary hover:bg-ican-light transition-all flex items-center gap-4" onclick="selectTopic('${topic.replace(/'/g, "\\'")}')">
+                    <div class="w-8 h-8 bg-ican-primary text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">${index + 1}</div>
+                    <span class="font-medium text-gray-800">${topic}</span>
+                </div>
+            `).join('');
+        }
+
+        // Select a topic
+        function selectTopic(topic) {
+            tgCurrentData.selectedTopic = topic;
+
+            // Hide selection, show final
+            document.getElementById('topic-selection-section').classList.add('hidden');
+            document.getElementById('topic-final-section').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Populate final card
+            document.getElementById('final-name').textContent = tgCurrentData.name;
+            document.getElementById('final-experience').textContent = experienceGuidance[tgCurrentData.experience];
+            document.getElementById('final-level').textContent = studentLevelDescriptions[tgCurrentData.studentLevel];
+            document.getElementById('final-subject').textContent = `${tgCurrentData.subjectIcon} ${tgCurrentData.subjectName}`;
+            document.getElementById('final-topic').textContent = topic;
+        }
+
+        // Regenerate topics
+        function regenerateTopics() {
+            generateTopicsForDemo();
+        }
+
+        // Back to topic form
+        function backToTopicForm() {
+            document.getElementById('topic-selection-section').classList.add('hidden');
+            document.getElementById('topic-input-section').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // New applicant
+        function newApplicantTopic() {
+            document.getElementById('topic-final-section').classList.add('hidden');
+            document.getElementById('topic-selection-section').classList.add('hidden');
+            document.getElementById('topic-input-section').classList.remove('hidden');
+            document.getElementById('topicGeneratorForm').reset();
+            tgCurrentData = { name: '', experience: '', studentLevel: '', subject: '', subjectName: '', subjectIcon: '', selectedTopic: '' };
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Download demo card as image
+        async function downloadDemoCard() {
+            showToast('Generating image...', 'info');
+
+            try {
+                const element = document.getElementById('demo-card-capture');
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+
+                const link = document.createElement('a');
+                link.download = `demo-${tgCurrentData.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+
+                showToast('Image downloaded!');
+            } catch (error) {
+                console.error('Error generating image:', error);
+                showToast('Error generating image', 'error');
+            }
+        }
+
+        // Print demo card
+        function printDemoCard() {
+            window.print();
+        }
+
+        // Use topic for assessment - switch to form tab with pre-filled data
+        function useTopicForAssessment() {
+            // Pre-fill assessment form
+            document.getElementById('applicant-name').value = tgCurrentData.name;
+            document.getElementById('topic').value = tgCurrentData.selectedTopic;
+            document.getElementById('demo-date').valueAsDate = new Date();
+
+            // Map student level to assessment level
+            const levelMapping = {
+                'preschool': 'Kinder',
+                'elementary-lower': 'Grade 1',
+                'elementary-upper': 'Grade 3',
+                'middle': 'Mid 1',
+                'high': 'High 1',
+                'adult-beginner': 'Adult',
+                'adult-intermediate': 'Adult',
+                'adult-advanced': 'Adult'
+            };
+            document.getElementById('level-targeted').value = levelMapping[tgCurrentData.studentLevel] || '';
+
+            // Switch to form tab
+            showTab('form');
+            showToast('Topic loaded into assessment form!');
+        }
+
+        // Render topics list for browsing
+        function renderTopicsList() {
+            const subjectFilter = document.getElementById('tg-filter-subject')?.value || 'all';
+            const levelFilter = document.getElementById('tg-filter-level')?.value || 'all';
+            const container = document.getElementById('topics-list-container');
+
+            if (!container || typeof topicsDatabase === 'undefined') return;
+
+            let html = '';
+            const subjects = subjectFilter === 'all' ? Object.keys(topicsDatabase) : [subjectFilter];
+
+            for (const subjectKey of subjects) {
+                const subject = topicsDatabase[subjectKey];
+                if (!subject) continue;
+
+                let subjectHtml = `<div class="mb-6">
+                    <h3 class="text-md font-semibold text-ican-primary mb-3 border-b border-gray-200 pb-2">${subject.icon} ${subject.name}</h3>`;
+
+                const levels = levelFilter === 'all' ? Object.keys(subject.topics) : [levelFilter];
+                let hasTopics = false;
+
+                for (const levelKey of levels) {
+                    const topics = subject.topics[levelKey];
+                    if (!topics || topics.length === 0) continue;
+
+                    hasTopics = true;
+                    const levelName = studentLevelDescriptions[levelKey] || levelKey;
+
+                    subjectHtml += `<div class="mb-4 ml-4">
+                        <h4 class="text-sm font-medium text-gray-600 mb-2">${levelName} <span class="bg-ican-primary text-white px-2 py-0.5 rounded-full text-xs ml-2">${topics.length} topics</span></h4>
+                        <div class="space-y-1">`;
+
+                    for (const topic of topics) {
+                        subjectHtml += `<div class="text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded">${topic}</div>`;
+                    }
+
+                    subjectHtml += '</div></div>';
+                }
+
+                subjectHtml += '</div>';
+
+                if (hasTopics) {
+                    html += subjectHtml;
+                }
+            }
+
+            if (!html) {
+                html = '<p class="text-center text-gray-500 py-4">No topics found for the selected filters.</p>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Clear form
+        function clearForm() {
+            if (!confirm('Are you sure you want to clear the form?')) return;
+
+            currentAssessmentId = null;
+            finalResult = '';
+            feedbackGenerated = false;
+            assessmentSaved = false;
+            sentToNotion = false;
+            document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
+            document.getElementById('demo-date').valueAsDate = new Date();
+            document.getElementById('level-targeted').value = '';
+            document.querySelectorAll('.rating-btn').forEach(btn => {
+                btn.classList.remove('met', 'ni', 'fail', 'bg-green-500', 'bg-yellow-500', 'bg-red-500', 'text-white', 'border-2', 'border-green-700', 'border-yellow-700', 'border-red-700', 'font-bold', 'shadow-lg', 'scale-105');
+                btn.classList.add('border', 'border-gray-300');
+            });
+            document.querySelectorAll('.final-btn').forEach(btn => {
+                btn.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-red-500', 'text-white', 'border-4');
+            });
+            document.getElementById('feedback-output').classList.add('hidden');
+            document.getElementById('feedback-content').textContent = '';
+            calculateScores();
+            updateButtonStates();
+        }
+
+        // Show toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+
+            toast.classList.remove('bg-green-500', 'bg-red-500');
+            toast.classList.add(type === 'error' ? 'bg-red-500' : 'bg-green-500');
+            toastMessage.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
